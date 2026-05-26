@@ -1,0 +1,1258 @@
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UniScore DZ - Smart University GPA Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root {
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #12122a;
+  --bg-card: rgba(255,255,255,0.04);
+  --glass: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.10);
+  --glass-hover: rgba(255,255,255,0.10);
+  --neon-blue: #4f8cff;
+  --neon-blue-glow: rgba(79,140,255,0.3);
+  --emerald: #00d4a0;
+  --emerald-glow: rgba(0,212,160,0.3);
+  --purple: #8b5cf6;
+  --purple-glow: rgba(139,92,246,0.3);
+  --danger: #ef4444;
+  --danger-glow: rgba(239,68,68,0.3);
+  --warning: #f59e0b;
+  --warning-glow: rgba(245,158,11,0.3);
+  --text-primary: #f0f4ff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 24px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.3);
+  --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"] {
+  --bg-primary: #f0f4ff;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(0,0,0,0.03);
+  --glass: rgba(255,255,255,0.8);
+  --glass-border: rgba(0,0,0,0.08);
+  --glass-hover: rgba(255,255,255,0.95);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --shadow: 0 8px 32px rgba(0,0,0,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:'Cairo',sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.6;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(79,140,255,0.3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(79,140,255,0.5)}
+::selection{background:var(--neon-blue);color:#fff}
+/* PROTECTION */
+body.protected{user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none}
+body.protected *{user-select:none;-webkit-user-select:none}
+body.blurred #app-main{filter:blur(20px);pointer-events:none}
+body.blurred #intro-screen{filter:blur(20px);pointer-events:none}
+/* INTRO */
+#intro-screen{position:fixed;inset:0;z-index:999999;background:var(--bg-primary);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:opacity 0.8s ease,transform 0.8s ease}
+#intro-screen.hidden{opacity:0;transform:scale(1.05);pointer-events:none}
+#intro-canvas{position:absolute;inset:0;z-index:0}
+.intro-content{position:relative;z-index:1;text-align:center;max-width:800px;padding:2rem;width:100%}
+.intro-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:translateY(30px) scale(0.95);transition:all 0.8s cubic-bezier(0.4,0,0.2,1);pointer-events:none;padding:2rem}
+.intro-slide.active{opacity:1;transform:translateY(0) scale(1)}
+.intro-logo{width:120px;height:120px;border-radius:50%;object-fit:contain;margin-bottom:1.5rem;filter:drop-shadow(0 0 40px var(--neon-blue-glow));animation:logoPulse 2s ease-in-out infinite}
+.intro-logo-text{font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,var(--neon-blue),var(--emerald),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.5rem;letter-spacing:-1px}
+.intro-univ{font-size:2rem;font-weight:700;color:var(--text-primary);margin-bottom:0.3rem;text-shadow:0 0 40px rgba(79,140,255,0.2)}
+.intro-univ-loc{font-size:1rem;color:var(--text-secondary);letter-spacing:2px;text-transform:uppercase}
+.intro-tagline{font-size:1.8rem;font-weight:600;color:var(--emerald);text-shadow:0 0 30px var(--emerald-glow)}
+.intro-appname{font-size:5rem;font-weight:900;background:linear-gradient(135deg,var(--neon-blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;animation:glowPulse 2s ease-in-out infinite}
+.intro-dev{font-size:1.5rem;font-weight:600;color:var(--text-primary);margin-bottom:0.5rem}
+.intro-dev-ar{font-size:1.3rem;color:var(--text-secondary);font-weight:500}
+.intro-mission{font-size:1.8rem;font-weight:700;background:linear-gradient(135deg,var(--emerald),var(--neon-blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.intro-progress{position:absolute;bottom:0;left:0;height:4px;background:linear-gradient(90deg,var(--neon-blue),var(--emerald),var(--purple));transition:width 0.3s linear;z-index:2;border-radius:0 2px 2px 0}
+.intro-progress-bg{position:absolute;bottom:0;left:0;right:0;height:4px;background:rgba(255,255,255,0.1);z-index:1}
+.intro-skip{position:absolute;bottom:30px;right:30px;z-index:3;background:var(--glass);border:1px solid var(--glass-border);color:var(--text-secondary);padding:10px 24px;border-radius:50px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:0.9rem;transition:var(--transition);backdrop-filter:blur(10px)}
+.intro-skip:hover{background:var(--glass-hover);color:var(--text-primary);border-color:var(--neon-blue)}
+@keyframes logoPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 40px var(--neon-blue-glow))}50%{transform:scale(1.05);filter:drop-shadow(0 0 60px var(--neon-blue-glow))}}
+@keyframes glowPulse{0%,100%{filter:drop-shadow(0 0 20px var(--purple-glow))}50%{filter:drop-shadow(0 0 40px var(--neon-blue-glow))}}
+@keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-10px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+/* MAIN APP */
+#app-main{display:none;min-height:100vh;position:relative}
+#app-main.show{display:flex}
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;left:0;width:260px;height:100vh;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-right:1px solid var(--glass-border);z-index:100;display:flex;flex-direction:column;transition:var(--transition);overflow:hidden}
+.sidebar-brand{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--glass-border)}
+.sidebar-brand-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--neon-blue),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;color:#fff;flex-shrink:0}
+.sidebar-brand-text{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--neon-blue),var(--emerald));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
+.sidebar-nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--radius-sm);color:var(--text-secondary);cursor:pointer;transition:var(--transition);margin-bottom:2px;text-decoration:none;font-weight:500;font-size:0.95rem}
+.sidebar-nav-item i{width:20px;text-align:center;font-size:1.1rem}
+.sidebar-nav-item:hover{background:var(--glass-hover);color:var(--text-primary)}
+.sidebar-nav-item.active{background:linear-gradient(135deg,rgba(79,140,255,0.15),rgba(139,92,246,0.15));color:var(--neon-blue);border-left:3px solid var(--neon-blue)}
+.sidebar-footer{padding:16px 12px;border-top:1px solid var(--glass-border)}
+.sidebar-user{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--radius-sm);background:var(--glass);cursor:pointer;transition:var(--transition)}
+.sidebar-user:hover{background:var(--glass-hover)}
+.sidebar-user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--neon-blue),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:0.9rem;flex-shrink:0}
+.sidebar-user-info{flex:1;min-width:0}
+.sidebar-user-name{font-size:0.85rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-user-role{font-size:0.75rem;color:var(--text-muted)}
+/* TOPBAR */
+.topbar{display:none;position:sticky;top:0;z-index:99;padding:12px 20px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--glass-border);align-items:center;gap:12px}
+.topbar.show{display:flex}
+.topbar-brand{display:flex;align-items:center;gap:8px;font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--neon-blue),var(--emerald));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar-search{flex:1;max-width:400px;position:relative}
+.topbar-search input{width:100%;padding:10px 16px 10px 40px;border-radius:50px;border:1px solid var(--glass-border);background:var(--glass);color:var(--text-primary);font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;transition:var(--transition)}
+.topbar-search input:focus{border-color:var(--neon-blue);box-shadow:0 0 20px var(--neon-blue-glow)}
+.topbar-search i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted)}
+.topbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.topbar-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--glass-border);background:var(--glass);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);font-size:1rem}
+.topbar-btn:hover{background:var(--glass-hover);color:var(--text-primary);border-color:var(--neon-blue)}
+/* MAIN CONTAINER */
+.main-container{flex:1;margin-left:260px;min-height:100vh;display:flex;flex-direction:column}
+.main-content{flex:1;padding:24px;max-width:1200px;width:100%;margin:0 auto}
+/* PAGE SECTIONS */
+.page-section{display:none;animation:fadeUp 0.5s ease}
+.page-section.active{display:block}
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:20px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:var(--transition);position:relative;overflow:hidden}
+.stat-card:hover{transform:translateY(-2px);border-color:var(--neon-blue);box-shadow:0 8px 30px rgba(79,140,255,0.1)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.stat-card.blue::before{background:linear-gradient(90deg,var(--neon-blue),var(--purple))}
+.stat-card.green::before{background:linear-gradient(90deg,var(--emerald),var(--neon-blue))}
+.stat-card.purple::before{background:linear-gradient(90deg,var(--purple),var(--neon-blue))}
+.stat-card.warning::before{background:linear-gradient(90deg,var(--warning),var(--danger))}
+.stat-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.stat-card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.stat-card-icon.blue{background:rgba(79,140,255,0.15);color:var(--neon-blue)}
+.stat-card-icon.green{background:rgba(0,212,160,0.15);color:var(--emerald)}
+.stat-card-icon.purple{background:rgba(139,92,246,0.15);color:var(--purple)}
+.stat-card-icon.warning{background:rgba(245,158,11,0.15);color:var(--warning)}
+.stat-card-value{font-size:2rem;font-weight:800;color:var(--text-primary);line-height:1.2}
+.stat-card-label{font-size:0.85rem;color:var(--text-secondary);margin-top:4px}
+.stat-card-change{font-size:0.8rem;padding:2px 8px;border-radius:20px;font-weight:600}
+.stat-card-change.up{background:rgba(0,212,160,0.15);color:var(--emerald)}
+.stat-card-change.down{background:rgba(239,68,68,0.15);color:var(--danger)}
+/* GPA CIRCULAR */
+.gpa-container{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+.gpa-circle-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.gpa-circle{position:relative;width:180px;height:180px;margin:16px 0}
+.gpa-circle svg{transform:rotate(-90deg);width:100%;height:100%}
+.gpa-circle-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:8}
+.gpa-circle-progress{fill:none;stroke:var(--neon-blue);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1.5s ease}
+.gpa-circle-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gpa-circle-value{font-size:3rem;font-weight:900;background:linear-gradient(135deg,var(--neon-blue),var(--emerald));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.gpa-circle-label{font-size:0.85rem;color:var(--text-secondary);margin-top:4px}
+.gpa-circle-scale{font-size:1rem;color:var(--text-muted);margin-top:2px}
+.gpa-info{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.gpa-info-item{text-align:center;padding:8px 16px}
+.gpa-info-value{font-size:1.2rem;font-weight:700;color:var(--text-primary)}
+.gpa-info-label{font-size:0.75rem;color:var(--text-muted)}
+/* GPA CALCULATOR */
+.gpa-calculator{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:24px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.gpa-form{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;margin-bottom:20px;align-items:end}
+.gpa-form-group{display:flex;flex-direction:column;gap:6px}
+.gpa-form-group label{font-size:0.85rem;color:var(--text-secondary);font-weight:600}
+.gpa-form-group input,.gpa-form-group select{padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--glass-border);background:var(--bg-primary);color:var(--text-primary);font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;transition:var(--transition)}
+.gpa-form-group input:focus,.gpa-form-group select:focus{border-color:var(--neon-blue);box-shadow:0 0 15px var(--neon-blue-glow)}
+.gpa-form-group select{appearance:none;cursor:pointer}
+.gpa-btn-add{padding:10px 20px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--neon-blue),var(--purple));color:#fff;font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:var(--transition);white-space:nowrap;height:42px}
+.gpa-btn-add:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(79,140,255,0.3)}
+.gpa-btn-add:active{transform:translateY(0)}
+.gpa-modules{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;max-height:300px;overflow-y:auto}
+.gpa-module{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-primary);border-radius:var(--radius-sm);border:1px solid var(--glass-border);transition:var(--transition);animation:slideIn 0.3s ease}
+.gpa-module:hover{border-color:var(--neon-blue)}
+.gpa-module-name{flex:1;font-weight:600;font-size:0.95rem}
+.gpa-module-coeff{color:var(--text-muted);font-size:0.85rem;padding:4px 10px;background:var(--glass);border-radius:20px}
+.gpa-module-grade{font-weight:700;font-size:1.1rem;min-width:40px;text-align:center}
+.gpa-module-grade.high{color:var(--emerald)}
+.gpa-module-grade.medium{color:var(--warning)}
+.gpa-module-grade.low{color:var(--danger)}
+.gpa-module-delete{width:32px;height:32px;border-radius:50%;border:none;background:rgba(239,68,68,0.1);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);font-size:0.8rem}
+.gpa-module-delete:hover{background:rgba(239,68,68,0.2)}
+.gpa-total{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,rgba(79,140,255,0.1),rgba(139,92,246,0.1));border-radius:var(--radius-sm);border:1px solid rgba(79,140,255,0.2)}
+.gpa-total-label{font-size:1rem;font-weight:600;color:var(--text-secondary)}
+.gpa-total-value{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--neon-blue),var(--emerald));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+/* FACULTY CARDS */
+.faculty-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.faculty-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:16px;cursor:pointer;transition:var(--transition);text-align:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.faculty-card:hover{border-color:var(--purple);transform:translateY(-2px);box-shadow:0 4px 20px rgba(139,92,246,0.15)}
+.faculty-card i{font-size:1.5rem;color:var(--purple);margin-bottom:8px}
+.faculty-card span{font-size:0.85rem;font-weight:600;color:var(--text-primary);display:block}
+/* SECTION HEADER */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.section-title{font-size:1.5rem;font-weight:800;color:var(--text-primary)}
+.section-title i{margin-right:10px;color:var(--neon-blue)}
+.section-subtitle{font-size:0.9rem;color:var(--text-secondary);margin-top:4px}
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.chart-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:20px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.chart-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.chart-card-title{font-size:1rem;font-weight:700;color:var(--text-primary)}
+.chart-card-title i{margin-right:8px;color:var(--neon-blue)}
+.chart-container{position:relative;height:250px;width:100%}
+/* ACADEMIC SUGGESTIONS */
+.suggestions-list{display:flex;flex-direction:column;gap:10px}
+.suggestion-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:16px;display:flex;align-items:flex-start;gap:12px;transition:var(--transition)}
+.suggestion-card:hover{border-color:var(--emerald)}
+.suggestion-icon{width:40px;height:40px;border-radius:10px;background:rgba(0,212,160,0.15);color:var(--emerald);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem}
+.suggestion-text{flex:1}
+.suggestion-text p{font-size:0.9rem;color:var(--text-primary);margin-bottom:4px}
+.suggestion-text small{font-size:0.8rem;color:var(--text-muted)}
+/* PROFILE */
+.profile-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:32px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);text-align:center;margin-bottom:24px}
+.profile-avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--neon-blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:900;color:#fff;margin:0 auto 16px;box-shadow:0 0 40px rgba(79,140,255,0.2)}
+.profile-name{font-size:1.5rem;font-weight:800;color:var(--text-primary);margin-bottom:4px}
+.profile-univ{font-size:0.95rem;color:var(--text-secondary);margin-bottom:4px}
+.profile-role{font-size:0.85rem;color:var(--text-muted);margin-bottom:20px}
+.profile-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;text-align:left}
+.profile-detail-item{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg-primary);border-radius:var(--radius-sm);border:1px solid var(--glass-border)}
+.profile-detail-item i{width:20px;color:var(--neon-blue)}
+.profile-detail-item span{font-size:0.9rem;color:var(--text-primary)}
+.profile-detail-item label{font-size:0.75rem;color:var(--text-muted);display:block}
+/* SETTINGS */
+.settings-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:24px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);margin-bottom:16px}
+.settings-card-title{font-size:1.1rem;font-weight:700;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.settings-card-title i{color:var(--neon-blue)}
+.settings-option{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--glass-border)}
+.settings-option:last-child{border-bottom:none}
+.settings-option-info{flex:1}
+.settings-option-label{font-size:0.95rem;font-weight:600;color:var(--text-primary)}
+.settings-option-desc{font-size:0.8rem;color:var(--text-muted)}
+.lang-selector{display:flex;gap:8px}
+.lang-btn{padding:6px 16px;border-radius:20px;border:1px solid var(--glass-border);background:transparent;color:var(--text-secondary);cursor:pointer;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:600;transition:var(--transition)}
+.lang-btn:hover{border-color:var(--neon-blue);color:var(--neon-blue)}
+.lang-btn.active{background:linear-gradient(135deg,var(--neon-blue),var(--purple));color:#fff;border-color:transparent}
+/* RECOVERY PREDICTION */
+.recovery-card{background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(239,68,68,0.1));border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+.recovery-title{font-size:1rem;font-weight:700;color:var(--warning);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.recovery-content{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.recovery-stat{text-align:center;padding:12px;background:rgba(0,0,0,0.2);border-radius:var(--radius-sm)}
+.recovery-stat-value{font-size:1.5rem;font-weight:800;color:var(--text-primary)}
+.recovery-stat-label{font-size:0.8rem;color:var(--text-muted)}
+/* TOGGLE SWITCH */
+.toggle{position:relative;width:48px;height:26px;flex-shrink:0;cursor:pointer}
+.toggle input{display:none}
+.toggle-slider{position:absolute;inset:0;background:var(--glass);border:1px solid var(--glass-border);border-radius:13px;transition:var(--transition)}
+.toggle-slider::before{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:var(--neon-blue);top:2px;left:2px;transition:var(--transition)}
+.toggle input:checked+.toggle-slider{background:linear-gradient(135deg,var(--neon-blue),var(--purple));border-color:transparent}
+.toggle input:checked+.toggle-slider::before{transform:translateX(22px);background:#fff}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:var(--radius-sm);border:none;font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:var(--transition);text-decoration:none}
+.btn-primary{background:linear-gradient(135deg,var(--neon-blue),var(--purple));color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(79,140,255,0.3)}
+.btn-secondary{background:var(--glass);color:var(--text-primary);border:1px solid var(--glass-border)}
+.btn-secondary:hover{background:var(--glass-hover);border-color:var(--neon-blue)}
+.btn-danger{background:linear-gradient(135deg,var(--danger),#dc2626);color:#fff}
+.btn-sm{padding:6px 16px;font-size:0.8rem}
+/* TOASTS */
+.toast-container{position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:var(--radius-sm);background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);box-shadow:var(--shadow);pointer-events:auto;animation:slideInRight 0.4s ease;max-width:400px;min-width:300px}
+.toast.success{border-color:var(--emerald)}
+.toast.error{border-color:var(--danger)}
+.toast.info{border-color:var(--neon-blue)}
+.toast-icon{font-size:1.2rem;flex-shrink:0}
+.toast.success .toast-icon{color:var(--emerald)}
+.toast.error .toast-icon{color:var(--danger)}
+.toast.info .toast-icon{color:var(--neon-blue)}
+.toast-message{flex:1;font-size:0.9rem;color:var(--text-primary)}
+.toast-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;padding:4px}
+.toast-close:hover{color:var(--text-primary)}
+@keyframes slideInRight{from{opacity:0;transform:translateX(100px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideOutRight{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(100px)}}
+/* FLOATING ACTION BUTTON */
+.fab{position:fixed;bottom:90px;right:20px;z-index:90;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--neon-blue),var(--purple));color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 20px rgba(79,140,255,0.3);transition:var(--transition);display:none}
+.fab:hover{transform:scale(1.1);box-shadow:0 6px 30px rgba(79,140,255,0.4)}
+.fab.show{display:flex}
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--glass-border);display:none;padding:6px 0;padding-bottom:env(safe-area-inset-bottom,6px);justify-content:space-around}
+.bottom-nav.show{display:flex}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);color:var(--text-muted);text-decoration:none;border:none;background:none;font-family:'Cairo',sans-serif}
+.bottom-nav-item i{font-size:1.3rem;transition:var(--transition)}
+.bottom-nav-item span{font-size:0.65rem;font-weight:600;transition:var(--transition)}
+.bottom-nav-item.active{color:var(--neon-blue)}
+.bottom-nav-item.active i{text-shadow:0 0 10px var(--neon-blue-glow)}
+.bottom-nav-item:hover{color:var(--text-primary)}
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:60px 20px}
+.empty-state i{font-size:3rem;color:var(--text-muted);margin-bottom:16px;opacity:0.5}
+.empty-state h3{font-size:1.2rem;color:var(--text-secondary);margin-bottom:8px}
+.empty-state p{font-size:0.9rem;color:var(--text-muted);max-width:400px;margin:0 auto}
+/* FOOTER */
+.app-footer{text-align:center;padding:24px;border-top:1px solid var(--glass-border);margin-top:auto}
+.app-footer p{font-size:0.85rem;color:var(--text-muted);margin-bottom:4px}
+.app-footer p:last-child{margin-bottom:0}
+.app-footer .highlight{color:var(--neon-blue)}
+/* SEARCH OVERLAY */
+.search-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;padding-top:80px}
+.search-overlay.show{display:flex}
+.search-overlay-box{width:90%;max-width:600px;background:var(--bg-secondary);border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.search-overlay-input{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--glass-border)}
+.search-overlay-input i{color:var(--text-muted);font-size:1.2rem}
+.search-overlay-input input{flex:1;border:none;background:none;color:var(--text-primary);font-family:'Cairo',sans-serif;font-size:1.1rem;outline:none}
+.search-overlay-results{padding:8px;max-height:300px;overflow-y:auto}
+.search-result-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition)}
+.search-result-item:hover{background:var(--glass)}
+.search-result-item i{width:36px;height:36px;border-radius:8px;background:var(--glass);display:flex;align-items:center;justify-content:center;color:var(--neon-blue);flex-shrink:0}
+.search-result-item-content{flex:1}
+.search-result-item-title{font-size:0.9rem;font-weight:600;color:var(--text-primary)}
+.search-result-item-desc{font-size:0.8rem;color:var(--text-muted)}
+/* ANIMATED BACKGROUND */
+.animated-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.animated-bg .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.15;animation:orbFloat 20s ease-in-out infinite}
+.animated-bg .orb:nth-child(1){width:500px;height:500px;background:var(--neon-blue);top:-10%;left:-5%;animation-delay:0s}
+.animated-bg .orb:nth-child(2){width:400px;height:400px;background:var(--purple);bottom:-10%;right:-5%;animation-delay:-7s}
+.animated-bg .orb:nth-child(3){width:300px;height:300px;background:var(--emerald);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-14s}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(50px,-50px) scale(1.1)}50%{transform:translate(-30px,30px) scale(0.9)}75%{transform:translate(20px,40px) scale(1.05)}}
+/* RESPONSIVE */
+@media(max-width:1024px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{position:fixed;inset:0;z-index:99;background:rgba(0,0,0,0.5);display:none;backdrop-filter:blur(4px)}
+  .sidebar-overlay.show{display:block}
+  .main-container{margin-left:0}
+  .topbar.show{display:flex}
+  .bottom-nav.show{display:flex}
+  .fab.show{display:flex}
+  .gpa-container{grid-template-columns:1fr}
+  .charts-grid{grid-template-columns:1fr}
+  .gpa-form{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .main-content{padding:16px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .gpa-form{gap:8px}
+  .section-title{font-size:1.2rem}
+  .intro-univ{font-size:1.5rem}
+  .intro-appname{font-size:3rem}
+  .intro-tagline{font-size:1.3rem}
+  .intro-dev{font-size:1.1rem}
+  .intro-mission{font-size:1.2rem}
+  .intro-logo{width:90px;height:90px}
+  .gpa-total-value{font-size:1.4rem}
+  .recovery-content{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr}
+  .profile-details{grid-template-columns:1fr}
+  .faculty-grid{grid-template-columns:1fr 1fr}
+  .main-content{padding:12px}
+  .toast{min-width:auto;max-width:90vw}
+  .intro-univ{font-size:1.2rem}
+  .intro-appname{font-size:2.2rem}
+  .intro-tagline{font-size:1.1rem}
+  .intro-dev{font-size:1rem}
+  .intro-logo{width:70px;height:70px}
+  .intro-logo-text{font-size:2.5rem}
+}
+[dir="rtl"] .sidebar{left:auto;right:0;border-right:none;border-left:1px solid var(--glass-border)}
+[dir="rtl"] .main-container{margin-left:0;margin-right:260px}
+[dir="rtl"] .gpa-form-group label{text-align:right}
+[dir="rtl"] .sidebar-nav-item i{margin-right:0;margin-left:12px}
+@media(max-width:1024px){
+  [dir="rtl"] .main-container{margin-right:0}
+  [dir="rtl"] .sidebar{right:-100%;left:auto;transform:none}
+  [dir="rtl"] .sidebar.open{right:0}
+}
+</style>
+</head>
+<body class="protected">
+<!-- ANIMATED BG -->
+<div class="animated-bg">
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+</div>
+<!-- INTRO SCREEN -->
+<div id="intro-screen">
+  <canvas id="intro-canvas"></canvas>
+  <div class="intro-content">
+    <div class="intro-slide" id="intro-slide-0"><img class="intro-logo" src="https://www.univ-bba.dz/templates/ja_rave/images/logo.png" alt="University Logo" onerror="this.style.display='none';document.getElementById('intro-logo-fallback').style.display='block'"><div id="intro-logo-fallback" class="intro-logo-text" style="display:none">UBBA</div></div>
+    <div class="intro-slide" id="intro-slide-1"><div class="intro-univ">Université Mohamed El Bachir El Ibrahimi</div><div class="intro-univ-loc">Bordj Bou Arreridj • Algeria</div></div>
+    <div class="intro-slide" id="intro-slide-2"><div class="intro-tagline">Smart Algerian University GPA Platform</div></div>
+    <div class="intro-slide" id="intro-slide-3"><div class="intro-appname">UniScore DZ</div></div>
+    <div class="intro-slide" id="intro-slide-4"><div class="intro-dev">Developed & Designed by Student Abdelilah Sidiali</div><div class="intro-dev-ar">تطوير وتصميم الطالب عبد الإله سيدي علي</div></div>
+    <div class="intro-slide" id="intro-slide-5"><div class="intro-mission">Crafted for Algerian University Students</div></div>
+  </div>
+  <div class="intro-progress-bg"></div>
+  <div class="intro-progress" id="intro-progress"></div>
+  <button class="intro-skip" id="intro-skip">Skip →</button>
+</div>
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-icon">U</div>
+    <div class="sidebar-brand-text" data-i18n="appName">UniScore DZ</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item active" data-page="dashboard" href="#"><i class="fas fa-th-large"></i><span data-i18n="dashboard">Dashboard</span></a>
+    <a class="sidebar-nav-item" data-page="gpa" href="#"><i class="fas fa-calculator"></i><span data-i18n="gpaCalc">GPA Calculator</span></a>
+    <a class="sidebar-nav-item" data-page="analytics" href="#"><i class="fas fa-chart-line"></i><span data-i18n="analytics">Analytics</span></a>
+    <a class="sidebar-nav-item" data-page="profile" href="#"><i class="fas fa-user-graduate"></i><span data-i18n="profile">Profile</span></a>
+    <a class="sidebar-nav-item" data-page="settings" href="#"><i class="fas fa-cog"></i><span data-i18n="settings">Settings</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-user-avatar">AS</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">Abdelilah Sidiali</div>
+        <div class="sidebar-user-role" data-i18n="student">Student</div>
+      </div>
+    </div>
+  </div>
+</aside>
+<!-- MAIN CONTAINER -->
+<div class="main-container" id="main-container">
+  <!-- TOPBAR -->
+  <header class="topbar" id="topbar">
+    <button class="topbar-btn" id="menu-toggle"><i class="fas fa-bars"></i></button>
+    <div class="topbar-brand">UniScore DZ</div>
+    <div class="topbar-search">
+      <i class="fas fa-search"></i>
+      <input type="text" id="search-trigger" data-i18n="searchPlaceholder" placeholder="Search..." readonly>
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-btn" id="theme-toggle"><i class="fas fa-moon"></i></button>
+    </div>
+  </header>
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <!-- DASHBOARD -->
+    <section class="page-section active" id="page-dashboard">
+      <div class="section-header">
+        <div><h1 class="section-title"><i class="fas fa-th-large"></i><span data-i18n="dashboard">Dashboard</span></h1><p class="section-subtitle" data-i18n="welcomeBack">Welcome back, Student!</p></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-card-header"><div class="stat-card-icon blue"><i class="fas fa-star"></i></div><span class="stat-card-change up">+0.5</span></div><div class="stat-card-value"><span id="gpa-display">0.00</span></div><div class="stat-card-label" data-i18n="currentGPA">Current GPA</div></div>
+        <div class="stat-card green"><div class="stat-card-header"><div class="stat-card-icon green"><i class="fas fa-book"></i></div></div><div class="stat-card-value"><span id="module-count">0</span></div><div class="stat-card-label" data-i18n="modules">Modules</div></div>
+        <div class="stat-card purple"><div class="stat-card-header"><div class="stat-card-icon purple"><i class="fas fa-university"></i></div></div><div class="stat-card-value">7</div><div class="stat-card-label" data-i18n="faculties">Faculties</div></div>
+        <div class="stat-card warning"><div class="stat-card-header"><div class="stat-card-icon warning"><i class="fas fa-trophy"></i></div></div><div class="stat-card-value"><span id="max-gpa">0.00</span></div><div class="stat-card-label" data-i18n="highestGrade">Highest Grade</div></div>
+      </div>
+      <div class="gpa-container">
+        <div class="gpa-circle-card">
+          <h3 style="font-size:0.95rem;color:var(--text-secondary);font-weight:600" data-i18n="overallGPA">Overall GPA</h3>
+          <div class="gpa-circle">
+            <svg viewBox="0 0 200 200">
+              <circle class="gpa-circle-bg" cx="100" cy="100" r="85"/>
+              <circle class="gpa-circle-progress" id="gpa-circle-progress" cx="100" cy="100" r="85" stroke-dasharray="535" stroke-dashoffset="535"/>
+            </svg>
+            <div class="gpa-circle-text">
+              <span class="gpa-circle-value" id="gpa-circle-value">0.00</span>
+              <span class="gpa-circle-label" data-i18n="outOf">out of 4.00</span>
+            </div>
+          </div>
+          <div class="gpa-info">
+            <div class="gpa-info-item"><div class="gpa-info-value" id="total-coeff">0</div><div class="gpa-info-label" data-i18n="totalCoeff">Total Coeff</div></div>
+            <div class="gpa-info-item"><div class="gpa-info-value" id="total-grade">0</div><div class="gpa-info-label" data-i18n="totalGrade">Total Grade</div></div>
+          </div>
+        </div>
+        <div class="gpa-circle-card">
+          <h3 style="font-size:0.95rem;color:var(--text-secondary);font-weight:600;margin-bottom:12px" data-i18n="faculties">Faculties</h3>
+          <div class="faculty-grid">
+            <div class="faculty-card"><i class="fas fa-microchip"></i><span>كلية العلوم والتكنولوجيا</span></div>
+            <div class="faculty-card"><i class="fas fa-leaf"></i><span>كلية العلوم الطبيعية وعلوم الحياة والأرض والكون</span></div>
+            <div class="faculty-card"><i class="fas fa-square-root-variable"></i><span>كلية الرياضيات والإعلام الآلي</span></div>
+            <div class="faculty-card"><i class="fas fa-language"></i><span>كلية الآداب واللغات</span></div>
+            <div class="faculty-card"><i class="fas fa-users"></i><span>كلية العلوم الاجتماعية والإنسانية</span></div>
+            <div class="faculty-card"><i class="fas fa-gavel"></i><span>كلية الحقوق والعلوم السياسية</span></div>
+            <div class="faculty-card"><i class="fas fa-chart-bar"></i><span>كلية العلوم الاقتصادية والتجارية وعلوم التسيير</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- GPA CALCULATOR -->
+    <section class="page-section" id="page-gpa">
+      <div class="section-header">
+        <div><h1 class="section-title"><i class="fas fa-calculator"></i><span data-i18n="gpaCalc">GPA Calculator</span></h1><p class="section-subtitle" data-i18n="gpaSubtitle">Add your modules and calculate your GPA</p></div>
+      </div>
+      <div class="gpa-calculator">
+        <div class="gpa-form">
+          <div class="gpa-form-group">
+            <label data-i18n="moduleName">Module Name</label>
+            <input type="text" id="module-name" data-i18n-placeholder="moduleNamePlaceholder" placeholder="e.g. Mathematics">
+          </div>
+          <div class="gpa-form-group">
+            <label data-i18n="coefficient">Coefficient</label>
+            <input type="number" id="module-coeff" min="1" max="10" value="1">
+          </div>
+          <div class="gpa-form-group">
+            <label data-i18n="grade">Grade (/20)</label>
+            <input type="number" id="module-grade" min="0" max="20" step="0.5" value="10">
+          </div>
+          <button class="gpa-btn-add" id="add-module"><i class="fas fa-plus"></i> <span data-i18n="addModule">Add Module</span></button>
+        </div>
+        <div class="gpa-modules" id="module-list">
+          <div class="empty-state" id="module-empty">
+            <i class="fas fa-book-open"></i>
+            <h3 data-i18n="noModules">No modules yet</h3>
+            <p data-i18n="addModuleHint">Add your first module to start calculating your GPA</p>
+          </div>
+        </div>
+        <div class="gpa-total">
+          <span class="gpa-total-label"><i class="fas fa-star"></i> <span data-i18n="yourGPA">Your GPA</span></span>
+          <span class="gpa-total-value" id="total-gpa">0.00</span>
+        </div>
+      </div>
+      <div class="recovery-card" id="recovery-section" style="display:none">
+        <div class="recovery-title"><i class="fas fa-chart-simple"></i> <span data-i18n="recoveryTitle">Recovery Prediction</span></div>
+        <div class="recovery-content">
+          <div class="recovery-stat"><div class="recovery-stat-value" id="recovery-needed">0</div><div class="recovery-stat-label" data-i18n="avgNeeded">Avg Needed to Reach 10/20</div></div>
+          <div class="recovery-stat"><div class="recovery-stat-value" id="recovery-feasible">-</div><div class="recovery-stat-label" data-i18n="feasibility">Feasibility</div></div>
+        </div>
+      </div>
+    </section>
+    <!-- ANALYTICS -->
+    <section class="page-section" id="page-analytics">
+      <div class="section-header">
+        <div><h1 class="section-title"><i class="fas fa-chart-line"></i><span data-i18n="analytics">Analytics</span></h1><p class="section-subtitle" data-i18n="analyticsSubtitle">Visualize your academic performance</p></div>
+        <div><button class="btn btn-primary" id="export-pdf"><i class="fas fa-file-pdf"></i> <span data-i18n="exportPDF">Export PDF</span></button></div>
+      </div>
+      <div id="analytics-content">
+        <div class="empty-state" id="analytics-empty">
+          <i class="fas fa-chart-simple"></i>
+          <h3 data-i18n="noAnalytics">No data to analyze</h3>
+          <p data-i18n="addModuleAnalytics">Add modules to see your analytics</p>
+        </div>
+      </div>
+      <div class="charts-grid" id="charts-container" style="display:none">
+        <div class="chart-card"><div class="chart-card-header"><div class="chart-card-title"><i class="fas fa-chart-bar"></i> <span data-i18n="modulePerformance">Module Performance</span></div></div><div class="chart-container"><canvas id="chart-modules"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-header"><div class="chart-card-title"><i class="fas fa-chart-pie"></i> <span data-i18n="gradeDistribution">Grade Distribution</span></div></div><div class="chart-container"><canvas id="chart-distribution"></canvas></div></div>
+      </div>
+      <div class="suggestions-list" id="suggestions-container" style="display:none;margin-top:20px">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px"><i class="fas fa-lightbulb" style="color:var(--warning);margin-right:8px"></i><span data-i18n="suggestions">Academic Suggestions</span></h3>
+      </div>
+    </section>
+    <!-- PROFILE -->
+    <section class="page-section" id="page-profile">
+      <div class="section-header"><div><h1 class="section-title"><i class="fas fa-user-graduate"></i><span data-i18n="profile">Profile</span></h1><p class="section-subtitle" data-i18n="profileSubtitle">Your academic information</p></div></div>
+      <div class="profile-card">
+        <div class="profile-avatar">AS</div>
+        <div class="profile-name">Abdelilah Sidiali</div>
+        <div class="profile-univ">Université Mohamed El Bachir El Ibrahimi</div>
+        <div class="profile-role" data-i18n="computerScience">Computer Science Student</div>
+        <div class="profile-details">
+          <div class="profile-detail-item"><i class="fas fa-id-card"></i><div><label data-i18n="registrationNum">Registration Number</label><span>2024/2025-0001</span></div></div>
+          <div class="profile-detail-item"><i class="fas fa-layer-group"></i><div><label data-i18n="level">Level</label><span>License 2</span></div></div>
+          <div class="profile-detail-item"><i class="fas fa-calendar"></i><div><label data-i18n="semester">Semester</label><span>S2</span></div></div>
+          <div class="profile-detail-item"><i class="fas fa-graduation-cap"></i><div><label data-i18n="faculty">Faculty</label><span>كلية الرياضيات والإعلام الآلي</span></div></div>
+          <div class="profile-detail-item"><i class="fas fa-envelope"></i><div><label data-i18n="email">Email</label><span>abdelilah.sidiali@univ-bba.dz</span></div></div>
+          <div class="profile-detail-item"><i class="fas fa-map-pin"></i><div><label data-i18n="location">Location</label><span>Bordj Bou Arreridj, Algeria</span></div></div>
+        </div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-card-title"><i class="fas fa-pen"></i> <span data-i18n="quickEdit">Quick Edit</span></div>
+        <div class="settings-option"><div class="settings-option-info"><div class="settings-option-label" data-i18n="studentName">Student Name</div><div class="settings-option-desc" data-i18n="editName">Edit your display name</div></div><button class="btn btn-secondary btn-sm" id="edit-name"><i class="fas fa-edit"></i> <span data-i18n="edit">Edit</span></button></div>
+      </div>
+    </section>
+    <!-- SETTINGS -->
+    <section class="page-section" id="page-settings">
+      <div class="section-header"><div><h1 class="section-title"><i class="fas fa-cog"></i><span data-i18n="settings">Settings</span></h1><p class="section-subtitle" data-i18n="settingsSubtitle">Customize your experience</p></div></div>
+      <div class="settings-card">
+        <div class="settings-card-title"><i class="fas fa-globe"></i> <span data-i18n="language">Language</span></div>
+        <div class="settings-option"><div class="settings-option-info"><div class="settings-option-label" data-i18n="appLanguage">App Language</div><div class="settings-option-desc" data-i18n="chooseLanguage">Choose your preferred language</div></div><div class="lang-selector"><button class="lang-btn active" data-lang="en">EN</button><button class="lang-btn" data-lang="fr">FR</button><button class="lang-btn" data-lang="ar">AR</button></div></div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-card-title"><i class="fas fa-palette"></i> <span data-i18n="appearance">Appearance</span></div>
+        <div class="settings-option"><div class="settings-option-info"><div class="settings-option-label" data-i18n="darkMode">Dark Mode</div><div class="settings-option-desc" data-i18n="toggleTheme">Toggle between dark and light theme</div></div><label class="toggle"><input type="checkbox" id="dark-mode-toggle" checked><span class="toggle-slider"></span></label></div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-card-title"><i class="fas fa-info-circle"></i> <span data-i18n="about">About</span></div>
+        <div style="text-align:center;padding:16px">
+          <div style="font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--neon-blue),var(--emerald));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px">UniScore DZ</div>
+          <div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:4px" data-i18n="version">Version 1.0.0</div>
+          <div style="font-size:0.85rem;color:var(--text-muted)">© 2026 — Crafted with ❤️ for Algerian Students</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <p data-i18n="footerMission">Crafted for Algerian University Students</p>
+    <p><span class="highlight">Developed & Designed by Student Abdelilah Sidiali</span></p>
+    <p style="font-size:0.8rem;color:var(--text-muted)">تطوير وتصميم الطالب عبد الإله سيدي علي</p>
+  </footer>
+</div>
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bottom-nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i><span data-i18n="dashboard">Dashboard</span></button>
+  <button class="bottom-nav-item" data-page="gpa"><i class="fas fa-calculator"></i><span data-i18n="gpaCalc">GPA</span></button>
+  <button class="bottom-nav-item" data-page="analytics"><i class="fas fa-chart-line"></i><span data-i18n="analytics">Analytics</span></button>
+  <button class="bottom-nav-item" data-page="profile"><i class="fas fa-user-graduate"></i><span data-i18n="profile">Profile</span></button>
+  <button class="bottom-nav-item" data-page="settings"><i class="fas fa-cog"></i><span data-i18n="settings">Settings</span></button>
+</nav>
+<!-- FAB -->
+<button class="fab" id="fab"><i class="fas fa-plus"></i></button>
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="search-overlay">
+  <div class="search-overlay-box">
+    <div class="search-overlay-input"><i class="fas fa-search"></i><input type="text" id="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search..." autofocus></div>
+    <div class="search-overlay-results" id="search-results"></div>
+  </div>
+</div>
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+<script>
+// ========== TRANSLATIONS ==========
+const L = {
+  en: {
+    appName:'UniScore DZ',dashboard:'Dashboard',gpaCalc:'GPA Calculator',analytics:'Analytics',profile:'Profile',settings:'Settings',student:'Student',
+    welcomeBack:'Welcome back, Student!',currentGPA:'Current GPA',modules:'Modules',faculties:'Faculties',highestGrade:'Highest Grade',
+    overallGPA:'Overall GPA',outOf:'out of 4.00',totalCoeff:'Total Coeff',totalGrade:'Total Grade',
+    gpaSubtitle:'Add your modules and calculate your GPA',moduleName:'Module Name',moduleNamePlaceholder:'e.g. Mathematics',
+    coefficient:'Coefficient',grade:'Grade (/20)',addModule:'Add Module',noModules:'No modules yet',addModuleHint:'Add your first module to start calculating your GPA',
+    yourGPA:'Your GPA',recoveryTitle:'Recovery Prediction',avgNeeded:'Avg Needed to Reach 10/20',feasibility:'Feasibility',
+    analyticsSubtitle:'Visualize your academic performance',exportPDF:'Export PDF',noAnalytics:'No data to analyze',
+    addModuleAnalytics:'Add modules to see your analytics',modulePerformance:'Module Performance',gradeDistribution:'Grade Distribution',
+    suggestions:'Academic Suggestions',profileSubtitle:'Your academic information',computerScience:'Computer Science Student',
+    registrationNum:'Registration Number',level:'Level',semester:'Semester',faculty:'Faculty',email:'Email',location:'Location',
+    quickEdit:'Quick Edit',studentName:'Student Name',editName:'Edit your display name',edit:'Edit',
+    settingsSubtitle:'Customize your experience',language:'Language',appLanguage:'App Language',chooseLanguage:'Choose your preferred language',
+    appearance:'Appearance',darkMode:'Dark Mode',toggleTheme:'Toggle between dark and light theme',about:'About',version:'Version 1.0.0',
+    searchPlaceholder:'Search...',noResults:'No results found',exportSuccess:'PDF exported successfully!',moduleAdded:'Module added!',
+    moduleDeleted:'Module deleted!',gpaUpdated:'GPA updated!',nameUpdated:'Name updated!',themeChanged:'Theme changed!',
+    langChanged:'Language changed!',skipIntro:'Skip →',footerMission:'Crafted for Algerian University Students'
+  },
+  fr: {
+    appName:'UniScore DZ',dashboard:'Tableau de Bord',gpaCalc:'Calculatrice GPA',analytics:'Analytique',profile:'Profil',settings:'Paramètres',student:'Étudiant',
+    welcomeBack:'Bon retour, Étudiant!',currentGPA:'GPA Actuel',modules:'Modules',faculties:'Facultés',highestGrade:'Meilleure Note',
+    overallGPA:'GPA Global',outOf:'sur 4.00',totalCoeff:'Coeff Total',totalGrade:'Note Totale',
+    gpaSubtitle:'Ajoutez vos modules et calculez votre GPA',moduleName:'Nom du Module',moduleNamePlaceholder:'ex: Mathématiques',
+    coefficient:'Coefficient',grade:'Note (/20)',addModule:'Ajouter Module',noModules:'Aucun module',addModuleHint:'Ajoutez votre premier module pour calculer votre GPA',
+    yourGPA:'Votre GPA',recoveryTitle:'Prédiction de Récupération',avgNeeded:'Moyenne Nécessaire pour 10/20',feasibility:'Faisabilité',
+    analyticsSubtitle:'Visualisez votre performance académique',exportPDF:'Exporter PDF',noAnalytics:'Aucune donnée à analyser',
+    addModuleAnalytics:'Ajoutez des modules pour voir vos analyses',modulePerformance:'Performance des Modules',gradeDistribution:'Distribution des Notes',
+    suggestions:'Suggestions Académiques',profileSubtitle:'Vos informations académiques',computerScience:'Étudiant en Informatique',
+    registrationNum:"Numéro d'Inscription",level:'Niveau',semester:'Semestre',faculty:'Faculté',email:'Email',location:'Localisation',
+    quickEdit:'Modification Rapide',studentName:"Nom d'Étudiant",editName:'Modifier votre nom affiché',edit:'Modifier',
+    settingsSubtitle:'Personnalisez votre expérience',language:'Langue',appLanguage:'Langue de App',chooseLanguage:'Choisissez votre langue préférée',
+    appearance:'Apparence',darkMode:'Mode Sombre',toggleTheme:'Basculer entre thème sombre et clair',about:'À Propos',version:'Version 1.0.0',
+    searchPlaceholder:'Rechercher...',noResults:'Aucun résultat trouvé',exportSuccess:'PDF exporté avec succès!',moduleAdded:'Module ajouté!',
+    moduleDeleted:'Module supprimé!',gpaUpdated:'GPA mis à jour!',nameUpdated:'Nom mis à jour!',themeChanged:'Thème changé!',
+    langChanged:'Langue changée!',skipIntro:'Passer →',footerMission:'Conçu pour les Étudiants Algériens'
+  },
+  ar: {
+    appName:'يوني سكور دي زد',dashboard:'لوحة القيادة',gpaCalc:'حاسبة المعدل',analytics:'التحليلات',profile:'الملف الشخصي',settings:'الإعدادات',student:'طالب',
+    welcomeBack:'مرحباً بعودتك، طالب!',currentGPA:'المعدل الحالي',modules:'المواد',faculties:'الكليات',highestGrade:'أعلى علامة',
+    overallGPA:'المعدل العام',outOf:'من 4.00',totalCoeff:'المعامل الكلي',totalGrade:'المجموع الكلي',
+    gpaSubtitle:'أضف موادك واحسب معدلك',moduleName:'اسم المادة',moduleNamePlaceholder:'مثال: الرياضيات',
+    coefficient:'المعامل',grade:'العلامة (/20)',addModule:'إضافة مادة',noModules:'لا توجد مواد بعد',addModuleHint:'أضف مادتك الأولى لبدء حساب المعدل',
+    yourGPA:'معدلك',recoveryTitle:'التنبؤ بالاستدراك',avgNeeded:'المعدل المطلوب للوصول إلى 10/20',feasibility:'الإمكانية',
+    analyticsSubtitle:'تصور أدائك الأكاديمي',exportPDF:'تصدير PDF',noAnalytics:'لا توجد بيانات للتحليل',
+    addModuleAnalytics:'أضف مواد لرؤية تحليلاتك',modulePerformance:'أداء المواد',gradeDistribution:'توزيع العلامات',
+    suggestions:'الاقتراحات الأكاديمية',profileSubtitle:'معلوماتك الأكاديمية',computerScience:'طالب علوم الحاسوب',
+    registrationNum:'رقم التسجيل',level:'المستوى',semester:'الفصل',faculty:'الكلية',email:'البريد الإلكتروني',location:'الموقع',
+    quickEdit:'تعديل سريع',studentName:'اسم الطالب',editName:'تعديل الاسم المعروض',edit:'تعديل',
+    settingsSubtitle:'خصص تجربتك',language:'اللغة',appLanguage:'لغة التطبيق',chooseLanguage:'اختر لغتك المفضلة',
+    appearance:'المظهر',darkMode:'الوضع الداكن',toggleTheme:'التبديل بين الوضع الداكن والفاتح',about:'حول',version:'الإصدار 1.0.0',
+    searchPlaceholder:'بحث...',noResults:'لا توجد نتائج',exportSuccess:'!PDF تم تصدير',moduleAdded:'!تمت إضافة المادة',
+    moduleDeleted:'!تم حذف المادة',gpaUpdated:'!تم تحديث المعدل',nameUpdated:'!تم تحديث الاسم',themeChanged:'!تم تغيير المظهر',
+    langChanged:'!تم تغيير اللغة',skipIntro:'→ تخطي',footerMission:'مصمم للطلاب الجزائريين'
+  }
+};
+// ========== STATE ==========
+let state = {
+  lang: 'en',
+  theme: 'dark',
+  modules: JSON.parse(localStorage.getItem('uniscore_modules')) || [],
+  studentName: localStorage.getItem('uniscore_name') || 'Abdelilah Sidiali'
+};
+// ========== LANGUAGE ENGINE ==========
+function t(key) {
+  const keys = key.split('.');
+  let val = L[state.lang];
+  for (const k of keys) {
+    if (!val) return key;
+    val = val[k];
+  }
+  return val || key;
+}
+function applyLanguage() {
+  document.documentElement.lang = state.lang;
+  document.documentElement.dir = state.lang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === state.lang);
+  });
+  localStorage.setItem('uniscore_lang', state.lang);
+}
+function switchLang(lang) {
+  state.lang = lang;
+  applyLanguage();
+  toast(t('langChanged'), 'info');
+}
+// ========== THEME ==========
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme === 'light' ? 'light' : 'dark');
+  document.getElementById('dark-mode-toggle').checked = state.theme === 'dark';
+  document.querySelector('#theme-toggle i').className = state.theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+  localStorage.setItem('uniscore_theme', state.theme);
+}
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  toast(t('themeChanged'), 'info');
+}
+// ========== TOAST ==========
+function toast(msg, type = 'info', duration = 3000) {
+  const container = document.getElementById('toast-container');
+  const icons = { success: 'fas fa-check-circle', error: 'fas fa-exclamation-circle', info: 'fas fa-info-circle' };
+  const toastEl = document.createElement('div');
+  toastEl.className = `toast ${type}`;
+  toastEl.innerHTML = `<div class="toast-icon"><i class="${icons[type]||icons.info}"></i></div><div class="toast-message">${msg}</div><button class="toast-close">×</button>`;
+  toastEl.querySelector('.toast-close').onclick = () => { toastEl.style.animation = 'slideOutRight 0.3s ease forwards'; setTimeout(() => toastEl.remove(), 300); };
+  container.appendChild(toastEl);
+  setTimeout(() => { if (toastEl.parentNode) { toastEl.style.animation = 'slideOutRight 0.3s ease forwards'; setTimeout(() => toastEl.remove(), 300); } }, duration);
+}
+// ========== GPA CALCULATOR ==========
+function calcGPA() {
+  const modules = state.modules;
+  if (modules.length === 0) return { gpa: 0, total: 0, coeff: 0, maxGrade: 0 };
+  let totalGrade = 0, totalCoeff = 0, maxGrade = 0;
+  modules.forEach(m => {
+    const grade = parseFloat(m.grade) || 0;
+    const coeff = parseFloat(m.coeff) || 1;
+    totalGrade += grade * coeff;
+    totalCoeff += coeff;
+    if (grade > maxGrade) maxGrade = grade;
+  });
+  const avg = totalCoeff > 0 ? totalGrade / totalCoeff : 0;
+  const gpa = (avg / 20) * 4;
+  return { gpa: Math.round(gpa * 100) / 100, avg: Math.round(avg * 100) / 100, total: totalGrade, coeff: totalCoeff, maxGrade };
+}
+function renderModules() {
+  const list = document.getElementById('module-list');
+  const empty = document.getElementById('module-empty');
+  const recovery = document.getElementById('recovery-section');
+  if (state.modules.length === 0) {
+    list.innerHTML = '';
+    list.appendChild(empty);
+    recovery.style.display = 'none';
+    updateGPA();
+    return;
+  }
+  empty.remove();
+  list.innerHTML = state.modules.map((m, i) => {
+    const g = parseFloat(m.grade) || 0;
+    const cls = g >= 14 ? 'high' : g >= 10 ? 'medium' : 'low';
+    return `<div class="gpa-module"><span class="gpa-module-name">${escHtml(m.name)}</span><span class="gpa-module-coeff">×${m.coeff}</span><span class="gpa-module-grade ${cls}">${g.toFixed(1)}</span><button class="gpa-module-delete" data-index="${i}"><i class="fas fa-times"></i></button></div>`;
+  }).join('');
+  list.querySelectorAll('.gpa-module-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.modules.splice(parseInt(btn.dataset.index), 1);
+      saveModules();
+      renderModules();
+      toast(t('moduleDeleted'), 'success');
+    });
+  });
+  updateGPA();
+  updateRecovery();
+}
+function updateGPA() {
+  const result = calcGPA();
+  const gpaVal = result.gpa.toFixed(2);
+  document.getElementById('gpa-display').textContent = gpaVal;
+  document.getElementById('module-count').textContent = state.modules.length;
+  document.getElementById('max-gpa').textContent = result.maxGrade.toFixed(2);
+  document.getElementById('gpa-circle-value').textContent = gpaVal;
+  document.getElementById('total-gpa').textContent = gpaVal;
+  document.getElementById('total-coeff').textContent = result.coeff;
+  document.getElementById('total-grade').textContent = result.total.toFixed(1);
+  const circle = document.getElementById('gpa-circle-progress');
+  const circumference = 535;
+  const offset = circumference - (result.gpa / 4) * circumference;
+  circle.style.strokeDashoffset = offset;
+  const hue = result.gpa >= 3 ? 'var(--emerald)' : result.gpa >= 2 ? 'var(--warning)' : 'var(--danger)';
+  circle.style.stroke = result.gpa >= 3 ? 'var(--emerald)' : result.gpa >= 2 ? 'var(--warning)' : 'var(--danger)';
+}
+function updateRecovery() {
+  const recovery = document.getElementById('recovery-section');
+  if (state.modules.length === 0) { recovery.style.display = 'none'; return; }
+  recovery.style.display = 'block';
+  const result = calcGPA();
+  const needed = Math.max(0, (10 - result.avg) + 0.01);
+  document.getElementById('recovery-needed').textContent = needed > 0 ? `+${needed.toFixed(2)}` : '0.00';
+  const feasible = needed <= 5;
+  document.getElementById('recovery-feasible').textContent = feasible ? '✅ ' + (state.lang === 'ar' ? 'ممكن' : state.lang === 'fr' ? 'Possible' : 'Feasible') : '❌ ' + (state.lang === 'ar' ? 'صعب' : state.lang === 'fr' ? 'Difficile' : 'Difficult');
+  document.getElementById('recovery-feasible').style.color = feasible ? 'var(--emerald)' : 'var(--danger)';
+}
+function saveModules() {
+  localStorage.setItem('uniscore_modules', JSON.stringify(state.modules));
+  updateAnalytics();
+}
+function escHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+// ========== ANALYTICS ==========
+let chartModules = null, chartDist = null;
+function updateAnalytics() {
+  const container = document.getElementById('charts-container');
+  const empty = document.getElementById('analytics-empty');
+  const suggestions = document.getElementById('suggestions-container');
+  const content = document.getElementById('analytics-content');
+  if (state.modules.length === 0) {
+    container.style.display = 'none';
+    suggestions.style.display = 'none';
+    content.appendChild(empty);
+    return;
+  }
+  empty.remove();
+  container.style.display = 'grid';
+  suggestions.style.display = 'block';
+  // Module performance chart
+  const names = state.modules.map(m => m.name);
+  const grades = state.modules.map(m => parseFloat(m.grade) || 0);
+  const colors = grades.map(g => g >= 14 ? '#00d4a0' : g >= 10 ? '#f59e0b' : '#ef4444');
+  if (chartModules) chartModules.destroy();
+  const ctx1 = document.getElementById('chart-modules').getContext('2d');
+  chartModules = new Chart(ctx1, {
+    type: 'bar',
+    data: { labels: names, datasets: [{ label: 'Grade /20', data: grades, backgroundColor: colors, borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, max: 20, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+        x: { grid: { display: false }, ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+  // Distribution chart
+  const dist = { high: grades.filter(g => g >= 14).length, medium: grades.filter(g => g >= 10 && g < 14).length, low: grades.filter(g => g < 10).length };
+  if (chartDist) chartDist.destroy();
+  const ctx2 = document.getElementById('chart-distribution').getContext('2d');
+  chartDist = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: [state.lang === 'ar' ? 'ممتاز (14+)' : state.lang === 'fr' ? 'Excellent (14+)' : 'Excellent (14+)',
+               state.lang === 'ar' ? 'متوسط (10-14)' : state.lang === 'fr' ? 'Moyen (10-14)' : 'Average (10-14)',
+               state.lang === 'ar' ? 'ضعيف (<10)' : state.lang === 'fr' ? 'Faible (<10)' : 'Low (<10)'],
+      datasets: [{ data: [dist.high, dist.medium, dist.low], backgroundColor: ['#00d4a0', '#f59e0b', '#ef4444'], borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 12 } } },
+      cutout: '65%' }
+  });
+  // Suggestions
+  const sugContainer = document.getElementById('suggestions-container');
+  let sugHTML = '<h3 style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px"><i class="fas fa-lightbulb" style="color:var(--warning);margin-right:8px"></i>' + t('suggestions') + '</h3>';
+  const weak = state.modules.filter(m => (parseFloat(m.grade) || 0) < 10);
+  const good = state.modules.filter(m => (parseFloat(m.grade) || 0) >= 14);
+  if (weak.length > 0) {
+    sugHTML += `<div class="suggestion-card"><div class="suggestion-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="suggestion-text"><p>${state.lang === 'ar' ? 'تحتاج إلى تحسين في' : state.lang === 'fr' ? 'Vous devez améliorer' : 'You need to improve in'}: ${weak.map(m => m.name).join(', ')}</p><small>${state.lang === 'ar' ? 'ركز على هذه المواد لرفع معدلك' : state.lang === 'fr' ? 'Concentrez-vous sur ces matières pour augmenter votre GPA' : 'Focus on these subjects to raise your GPA'}</small></div></div>`;
+  }
+  if (good.length > 0) {
+    sugHTML += `<div class="suggestion-card"><div class="suggestion-icon" style="background:rgba(0,212,160,0.15);color:var(--emerald)"><i class="fas fa-check-circle"></i></div><div class="suggestion-text"><p>${state.lang === 'ar' ? 'أداء ممتاز في' : state.lang === 'fr' ? 'Excellente performance en' : 'Excellent performance in'}: ${good.map(m => m.name).join(', ')}</p><small>${state.lang === 'ar' ? 'حافظ على هذا المستوى' : state.lang === 'fr' ? 'Continuez à maintenir ce niveau' : 'Keep up this level'}</small></div></div>`;
+  }
+  if (weak.length > 0 && good.length > 0 && state.modules.length >= 4) {
+    sugHTML += `<div class="suggestion-card"><div class="suggestion-icon" style="background:rgba(139,92,246,0.15);color:var(--purple)"><i class="fas fa-robot"></i></div><div class="suggestion-text"><p>${state.lang === 'ar' ? 'اقتراح: خصص ساعتين يومياً للمواد الضعيفة' : state.lang === 'fr' ? 'Suggestion: Consacrez 2 heures par jour aux matières faibles' : 'Suggestion: Dedicate 2 hours daily to weak subjects'}</p><small>${state.lang === 'ar' ? 'التوازن بين المواد يحسن معدلك العام' : state.lang === 'fr' ? 'Équilibrer vos matières améliore votre GPA global' : 'Balancing your subjects improves your overall GPA'}</small></div></div>`;
+  }
+  sugContainer.innerHTML = sugHTML;
+}
+// ========== PDF EXPORT ==========
+async function exportPDF() {
+  try {
+    toast('Exporting PDF...', 'info', 2000);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    // Header
+    doc.setFillColor(10, 10, 26);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(79, 140, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('UniScore DZ', pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text('Universite Mohamed El Bachir El Ibrahimi - Bordj Bou Arreridj', pageWidth / 2, 30, { align: 'center' });
+    // Divider
+    doc.setDrawColor(79, 140, 255);
+    doc.setLineWidth(0.5);
+    doc.line(20, 45, pageWidth - 20, 45);
+    // Student info
+    doc.setTextColor(240, 244, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Student Report', 20, 58);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Name: ${state.studentName}`, 20, 68);
+    doc.text(`University: Universite Mohamed El Bachir El Ibrahimi`, 20, 76);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 84);
+    // GPA Summary
+    const result = calcGPA();
+    doc.setDrawColor(79, 140, 255);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(20, 92, pageWidth - 40, 40, 3, 3);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 212, 160);
+    doc.text(`GPA: ${result.gpa.toFixed(2)} / 4.00`, pageWidth / 2, 108, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Average: ${result.avg.toFixed(2)}/20 | Modules: ${state.modules.length} | Total Coeff: ${result.coeff}`, pageWidth / 2, 122, { align: 'center' });
+    // QR Code placeholder
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(pageWidth - 45, 140, 25, 25, 2, 2, 'F');
+    doc.setFontSize(6);
+    doc.setTextColor(0, 0, 0);
+    doc.text('UniScore DZ', pageWidth - 33, 155, { align: 'center' });
+    // Modules table
+    if (state.modules.length > 0) {
+      let y = 145;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(240, 244, 255);
+      doc.text('Modules', 20, y);
+      y += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      state.modules.forEach((m, i) => {
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setTextColor(148, 163, 184);
+        doc.text(`${i + 1}. ${m.name}`, 25, y);
+        doc.text(`x${m.coeff}`, pageWidth / 2, y);
+        doc.text(`${parseFloat(m.grade).toFixed(1)}/20`, pageWidth - 40, y);
+        y += 6;
+      });
+    }
+    // Watermark
+    doc.setFontSize(40);
+    doc.setTextColor(79, 140, 255);
+    doc.setGState(doc.GState({ opacity: 0.05 }));
+    doc.text('UniScore DZ', pageWidth / 2, 150, { align: 'center', angle: 45 });
+    // Footer
+    doc.setGState(doc.GState({ opacity: 1 }));
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Generated by UniScore DZ - Crafted for Algerian University Students', pageWidth / 2, 285, { align: 'center' });
+    doc.text('Developed & Designed by Student Abdelilah Sidiali', pageWidth / 2, 291, { align: 'center' });
+    doc.save('UniScore_DZ_Report.pdf');
+    toast(t('exportSuccess'), 'success');
+  } catch (e) {
+    console.error(e);
+    toast('PDF export error: ' + e.message, 'error');
+  }
+}
+// ========== INTRO ==========
+function startIntro() {
+  const screen = document.getElementById('intro-screen');
+  const progress = document.getElementById('intro-progress');
+  const totalDuration = 30000;
+  const slides = [0, 1, 2, 3, 4, 5];
+  const timings = [0, 5000, 10000, 15000, 20000, 25000];
+  let currentSlide = -1;
+  let animFrame;
+  function showSlide(idx) {
+    document.querySelectorAll('.intro-slide').forEach(s => s.classList.remove('active'));
+    const slide = document.getElementById(`intro-slide-${idx}`);
+    if (slide) slide.classList.add('active');
+  }
+  function tick() {
+    const elapsed = Date.now() - startTime;
+    const pct = Math.min((elapsed / totalDuration) * 100, 100);
+    progress.style.width = pct + '%';
+    for (let i = slides.length - 1; i >= 0; i--) {
+      if (elapsed >= timings[i]) {
+        if (currentSlide !== i) {
+          currentSlide = i;
+          showSlide(i);
+        }
+        break;
+      }
+    }
+    if (elapsed < totalDuration) {
+      animFrame = requestAnimationFrame(tick);
+    } else {
+      endIntro();
+    }
+  }
+  function endIntro() {
+    cancelAnimationFrame(animFrame);
+    screen.classList.add('hidden');
+    screen.style.pointerEvents = 'none';
+    setTimeout(() => {
+      document.getElementById('app-main').classList.add('show');
+      document.getElementById('app-main').style.display = 'flex';
+      initApp();
+    }, 800);
+  }
+  const startTime = Date.now();
+  showSlide(0);
+  currentSlide = 0;
+  animFrame = requestAnimationFrame(tick);
+  document.getElementById('intro-skip').addEventListener('click', endIntro);
+}
+// ========== PARTICLES ==========
+function initParticles() {
+  const canvas = document.getElementById('intro-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let animFrame;
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 3 + 1;
+      this.speedX = (Math.random() - 0.5) * 0.5;
+      this.speedY = (Math.random() - 0.5) * 0.5;
+      this.opacity = Math.random() * 0.5 + 0.1;
+      this.color = ['79,140,255', '0,212,160', '139,92,246'][Math.floor(Math.random() * 3)];
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${this.color},${this.opacity})`;
+      ctx.fill();
+    }
+  }
+  const count = Math.min(80, Math.floor((canvas.width * canvas.height) / 15000));
+  for (let i = 0; i < count; i++) particles.push(new Particle());
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    // Connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(79,140,255,${0.08 * (1 - dist / 120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    animFrame = requestAnimationFrame(animate);
+  }
+  animate();
+  // Cleanup on intro end
+  document.getElementById('intro-skip').addEventListener('click', () => {
+    setTimeout(() => { cancelAnimationFrame(animFrame); canvas.remove(); }, 1000);
+  });
+  // Also timeout cleanup
+  setTimeout(() => {
+    const obs = new MutationObserver(() => {
+      if (document.getElementById('intro-screen').classList.contains('hidden')) {
+        setTimeout(() => { cancelAnimationFrame(animFrame); canvas.remove(); }, 1000);
+        obs.disconnect();
+      }
+    });
+    obs.observe(document.getElementById('intro-screen'), { attributes: true, attributeFilter: ['class'] });
+  }, 1000);
+}
+// ========== NAVIGATION ==========
+function navigateTo(page) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.querySelectorAll('.sidebar-nav-item, .bottom-nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  if (page === 'analytics') { Chart.instances && setTimeout(() => { Chart.instances.forEach(i => i.resize()); }, 100); }
+}
+// ========== SEARCH ==========
+function initSearch() {
+  const searchTrigger = document.getElementById('search-trigger');
+  const overlay = document.getElementById('search-overlay');
+  const input = document.getElementById('search-input');
+  const results = document.getElementById('search-results');
+  function openSearch() { overlay.classList.add('show'); setTimeout(() => input.focus(), 100); }
+  function closeSearch() { overlay.classList.remove('show'); results.innerHTML = ''; input.value = ''; }
+  searchTrigger.addEventListener('click', openSearch);
+  document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); } });
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeSearch(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSearch(); });
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    if (!q) { results.innerHTML = ''; return; }
+    const items = [
+      { title: t('dashboard'), desc: t('welcomeBack'), icon: 'fa-th-large', page: 'dashboard' },
+      { title: t('gpaCalc'), desc: t('gpaSubtitle'), icon: 'fa-calculator', page: 'gpa' },
+      { title: t('analytics'), desc: t('analyticsSubtitle'), icon: 'fa-chart-line', page: 'analytics' },
+      { title: t('profile'), desc: t('profileSubtitle'), icon: 'fa-user-graduate', page: 'profile' },
+      { title: t('settings'), desc: t('settingsSubtitle'), icon: 'fa-cog', page: 'settings' },
+    ];
+    // add modules as search results
+    state.modules.forEach((m, i) => {
+      items.push({ title: `${m.name} (${m.grade}/20)`, desc: `×${m.coeff}`, icon: 'fa-book', page: 'gpa' });
+    });
+    const filtered = items.filter(item =>
+      item.title.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q)
+    );
+    if (filtered.length === 0) {
+      results.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted)">${t('noResults')}</div>`;
+      return;
+    }
+    results.innerHTML = filtered.map(item => `
+      <div class="search-result-item" data-page="${item.page}">
+        <i class="fas ${item.icon}"></i>
+        <div class="search-result-item-content">
+          <div class="search-result-item-title">${item.title}</div>
+          <div class="search-result-item-desc">${item.desc}</div>
+        </div>
+      </div>
+    `).join('');
+    results.querySelectorAll('.search-result-item').forEach(el => {
+      el.addEventListener('click', () => { navigateTo(el.dataset.page); closeSearch(); });
+    });
+  });
+}
+// ========== PROTECTION ==========
+function initProtection() {
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) || (e.ctrlKey && e.key === 'u')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+  // DevTools detection
+  let devtoolsOpen = false;
+  const checkDevTools = () => {
+    const threshold = 160;
+    const widthDiff = window.outerWidth - window.innerWidth > threshold;
+    const heightDiff = window.outerHeight - window.innerHeight > threshold;
+    if (widthDiff || heightDiff) {
+      if (!devtoolsOpen) {
+        devtoolsOpen = true;
+        document.body.classList.add('blurred');
+        const warn = document.createElement('div');
+        warn.id = 'devtools-warning';
+        warn.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;backdrop-filter:blur(20px)';
+        warn.innerHTML = '<i class="fas fa-shield-halved" style="font-size:4rem;color:var(--danger)"></i><h2 style="color:var(--text-primary);font-size:1.5rem">Developer Tools Detected</h2><p style="color:var(--text-secondary)">Please close DevTools to continue</p><button onclick="document.getElementById(\'devtools-warning\').remove();document.body.classList.remove(\'blurred\');devtoolsOpen=false" style="padding:10px 30px;border-radius:50px;border:1px solid var(--neon-blue);background:transparent;color:var(--neon-blue);cursor:pointer;font-family:\'Cairo\',sans-serif">Continue</button>';
+        document.body.appendChild(warn);
+      }
+    } else if (devtoolsOpen) {
+      devtoolsOpen = false;
+      document.body.classList.remove('blurred');
+      const w = document.getElementById('devtools-warning');
+      if (w) w.remove();
+    }
+  };
+  setInterval(checkDevTools, 2000);
+}
+// ========== INIT ==========
+function initApp() {
+  applyLanguage();
+  applyTheme();
+  // GPA
+  renderModules();
+  document.getElementById('add-module').addEventListener('click', () => {
+    const name = document.getElementById('module-name').value.trim();
+    const coeff = parseFloat(document.getElementById('module-coeff').value) || 1;
+    const grade = parseFloat(document.getElementById('module-grade').value);
+    if (!name) { toast(state.lang === 'ar' ? 'الرجاء إدخال اسم المادة' : state.lang === 'fr' ? 'Veuillez entrer le nom du module' : 'Please enter module name', 'error'); return; }
+    if (isNaN(grade) || grade < 0 || grade > 20) { toast(state.lang === 'ar' ? 'الرجاء إدخال علامة صحيحة (0-20)' : state.lang === 'fr' ? 'Veuillez entrer une note valide (0-20)' : 'Please enter a valid grade (0-20)', 'error'); return; }
+    state.modules.push({ name, coeff, grade });
+    saveModules();
+    renderModules();
+    toast(t('moduleAdded'), 'success');
+    document.getElementById('module-name').value = '';
+    document.getElementById('module-grade').value = '10';
+  });
+  // Nav
+  document.querySelectorAll('.sidebar-nav-item, .bottom-nav-item').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      navigateTo(el.dataset.page);
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('show');
+    });
+  });
+  // Sidebar toggle
+  document.getElementById('menu-toggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('show');
+  });
+  document.getElementById('sidebar-overlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+  });
+  // Language
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchLang(btn.dataset.lang);
+      updateAnalytics();
+    });
+  });
+  // Theme
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+  document.getElementById('dark-mode-toggle').addEventListener('change', toggleTheme);
+  // Search
+  initSearch();
+  // PDF
+  document.getElementById('export-pdf').addEventListener('click', exportPDF);
+  // Edit name
+  document.getElementById('edit-name').addEventListener('click', () => {
+    const name = prompt(state.lang === 'ar' ? 'أدخل اسمك:' : state.lang === 'fr' ? 'Entrez votre nom:' : 'Enter your name:', state.studentName);
+    if (name && name.trim()) {
+      state.studentName = name.trim();
+      localStorage.setItem('uniscore_name', state.studentName);
+      document.querySelectorAll('.sidebar-user-name').forEach(el => el.textContent = state.studentName);
+      document.querySelector('.profile-name').textContent = state.studentName;
+      document.querySelector('.profile-avatar').textContent = state.studentName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+      toast(t('nameUpdated'), 'success');
+    }
+  });
+  // FAB
+  document.getElementById('fab').addEventListener('click', () => navigateTo('gpa'));
+  // Load student name
+  document.querySelectorAll('.sidebar-user-name').forEach(el => el.textContent = state.studentName);
+  document.querySelector('.profile-name').textContent = state.studentName;
+  document.querySelector('.profile-avatar').textContent = state.studentName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  // Init analytics
+  updateAnalytics();
+}
+// ========== START ==========
+document.addEventListener('DOMContentLoaded', () => {
+  // Restore lang
+  const savedLang = localStorage.getItem('uniscore_lang');
+  if (savedLang && L[savedLang]) state.lang = savedLang;
+  const savedTheme = localStorage.getItem('uniscore_theme');
+  if (savedTheme) state.theme = savedTheme;
+  initProtection();
+  initParticles();
+  startIntro();
+});
+</script>
+</body>
+</html>
